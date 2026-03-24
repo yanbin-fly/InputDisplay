@@ -1,0 +1,322 @@
+<Window x:Class="InputDisplay.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="输入显示器"
+        Height="540"
+        Width="340"
+        MinWidth="280"
+        MinHeight="160"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ShowInTaskbar="True"
+        ResizeMode="CanResizeWithGrip"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown"
+        Loaded="OnLoaded"
+        Closing="Window_Closing"
+        LocationChanged="Window_LocationChanged"
+        SizeChanged="Window_SizeChanged"
+        StateChanged="Window_StateChanged">
+
+    <Window.Resources>
+        <Style x:Key="CardBorder" TargetType="Border">
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="BorderBrush" Value="#20000000"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style x:Key="HeaderButton" TargetType="Button">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#555"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#18000000"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#25000000"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="IconButton" TargetType="Button">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Foreground" Value="#666"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="border" Background="{TemplateBinding Background}" CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="#22000000"/>
+                                <Setter Property="Foreground" Value="#333"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <DataTemplate x:Key="InputItemTemplate">
+            <Border Padding="8,4" Margin="0,1" CornerRadius="6">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Type}" Value="Keyboard">
+                                <Setter Property="Background" Value="#080088CC"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding Type}" Value="Mouse">
+                                <Setter Property="Background" Value="#0800AA55"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{Binding Category}" FontSize="11"
+                               Foreground="#888" VerticalAlignment="Center" Margin="0,0,6,0" Width="48"/>
+                    <TextBlock Grid.Column="1" Text="{Binding Description}" FontSize="12"
+                               Foreground="#333" VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"/>
+                    <TextBlock Grid.Column="2" Text="{Binding TimeStr}" FontSize="10"
+                               Foreground="#AAA" VerticalAlignment="Center" Margin="6,0,0,0"/>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Border Margin="8" Style="{StaticResource CardBorder}" Background="#F5F8FF">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="20" ShadowDepth="2" Opacity="0.12" Color="#000"/>
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- 标题栏 -->
+            <Border Grid.Row="0" CornerRadius="12,12,0,0" Background="#E8EEFF" Padding="12,8">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="输入监控" FontSize="13" FontWeight="SemiBold" Foreground="#334"/>
+                        <Border Background="#4CAF50" CornerRadius="8" Padding="6,1" Margin="8,0,0,0" VerticalAlignment="Center">
+                            <TextBlock Text="● 录制中" FontSize="10" Foreground="White"/>
+                        </Border>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button x:Name="StatsToggleBtn" Content="📊" ToolTip="显示统计"
+                                Style="{StaticResource IconButton}" Click="StatsToggle_Click"/>
+                        <Button Content="─" ToolTip="最小化" Style="{StaticResource HeaderButton}"
+                                Click="MinimizeBtn_Click"/>
+                        <Button Content="✕" ToolTip="关闭" Style="{StaticResource HeaderButton}"
+                                Click="CloseBtn_Click"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!-- 当前输入展示卡 -->
+            <Border x:Name="CurrentInputCard" Grid.Row="1" Margin="8,8,8,4" Padding="12,10"
+                    CornerRadius="10" Background="#EEF2FF" BorderBrush="#D0D8FF" BorderThickness="1"
+                    Visibility="Collapsed">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding CurrentInput.IsKeyboard}" Value="True">
+                                <Setter Property="Background" Value="#EEF2FF"/>
+                                <Setter Property="BorderBrush" Value="#AABBFF"/>
+                            </DataTrigger>
+                            <DataTrigger Binding="{Binding CurrentInput.IsMouse}" Value="True">
+                                <Setter Property="Background" Value="#EEFAF2"/>
+                                <Setter Property="BorderBrush" Value="#AAEDC0"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 类型图标 -->
+                    <TextBlock Grid.Column="0" FontSize="22" VerticalAlignment="Center" Margin="0,0,10,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="🖱"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CurrentInput.IsKeyboard}" Value="True">
+                                        <Setter Property="Text" Value="⌨"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!-- 当前输入内容 -->
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                        <TextBlock Text="当前输入" FontSize="10" Foreground="#999" Margin="0,0,0,2"/>
+                        <TextBlock Text="{Binding CurrentInput.Description}" FontSize="15" FontWeight="SemiBold"
+                                   Foreground="#334" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+
+                    <!-- 时间戳 -->
+                    <TextBlock Grid.Column="2" Text="{Binding CurrentInput.TimeStr}" FontSize="10"
+                               Foreground="#AAA" VerticalAlignment="Bottom" Margin="0,0,0,2"/>
+                </Grid>
+            </Border>
+
+            <!-- 统计面板（可折叠） -->
+            <Border x:Name="StatsPanel" Grid.Row="2" Background="#F0F4FF"
+                    Visibility="Collapsed" Padding="12,8">
+                <StackPanel>
+                    <TextBlock Text="📈 输入统计" FontSize="11" FontWeight="SemiBold"
+                               Foreground="#556" Margin="0,0,0,6"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="键盘按键" FontSize="11" Foreground="#888"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" FontSize="11" Foreground="#333" HorizontalAlignment="Right">
+                            <Run Text="{Binding Statistics.TotalKeyPresses, Mode=OneWay}" FontWeight="SemiBold"/>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="鼠标点击" FontSize="11" Foreground="#888"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" FontSize="11" Foreground="#333" HorizontalAlignment="Right">
+                            <Run Text="{Binding Statistics.TotalMouseClicks, Mode=OneWay}" FontWeight="SemiBold"/>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="鼠标移动" FontSize="11" Foreground="#888"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" FontSize="11" Foreground="#333" HorizontalAlignment="Right">
+                            <Run Text="{Binding Statistics.TotalMouseMoves, Mode=OneWay}" FontWeight="SemiBold"/>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="滚轮滚动" FontSize="11" Foreground="#888"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" FontSize="11" Foreground="#333" HorizontalAlignment="Right">
+                            <Run Text="{Binding Statistics.TotalScrolls, Mode=OneWay}" FontWeight="SemiBold"/>
+                        </TextBlock>
+                    </Grid>
+
+                    <!-- 鼠标按钮统计 -->
+                    <Border Background="White" CornerRadius="8" Padding="10,6" Margin="0,6,0,0">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock FontSize="11" Foreground="#333">
+                                <Run Text="左键"/>: <Run Text="{Binding Statistics.LeftClickCount, Mode=OneWay}" FontWeight="SemiBold"/>
+                            </TextBlock>
+                            <TextBlock FontSize="11" Foreground="#333" Margin="12,0">
+                                <Run Text="右键"/>: <Run Text="{Binding Statistics.RightClickCount, Mode=OneWay}" FontWeight="SemiBold"/>
+                            </TextBlock>
+                            <TextBlock FontSize="11" Foreground="#333">
+                                <Run Text="中键"/>: <Run Text="{Binding Statistics.MiddleClickCount, Mode=OneWay}" FontWeight="SemiBold"/>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 高频按键 Top5 -->
+                    <Border Background="White" CornerRadius="8" Padding="10,6" Margin="0,4,0,0">
+                        <StackPanel>
+                            <TextBlock Text="高频按键 Top5" FontSize="11" Foreground="#888" Margin="0,0,0,4"/>
+                            <ItemsControl ItemsSource="{Binding Statistics.TopKeys}" FontSize="11" Foreground="#333">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Margin="0,1">
+                                            <Run Text="{Binding Key}" FontWeight="SemiBold"/>
+                                            <Run Text=" × "/><Run Text="{Binding Count}"/>
+                                        </TextBlock>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- 会话时长 -->
+                    <TextBlock Text="{Binding Statistics.SessionDurationStr}" FontSize="11" Foreground="#888" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 输入历史列表 -->
+            <ListBox Grid.Row="3" x:Name="InputListBox"
+                     ItemsSource="{Binding RecentInputs, Mode=OneWay}"
+                     ItemTemplate="{StaticResource InputItemTemplate}"
+                     Background="Transparent" BorderThickness="0"
+                     Padding="6,4"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                     VirtualizingStackPanel.IsVirtualizing="True"
+                     VirtualizingStackPanel.VirtualizationMode="Recycling"
+                     MouseDoubleClick="InputListBox_MouseDoubleClick">
+                <ListBox.ItemContainerStyle>
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="Margin" Value="0"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <ContentPresenter/>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListBox.ItemContainerStyle>
+            </ListBox>
+
+            <!-- 空状态提示 -->
+            <TextBlock Grid.Row="3" x:Name="EmptyText"
+                       Text="等待输入..."
+                       FontSize="13" Foreground="#AAA"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Visibility="Visible"/>
+        </Grid>
+    </Border>
+</Window>
